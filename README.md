@@ -35,3 +35,8 @@ will create the sequence:
 - 100ms off
 - 100ms white
 - 100ms off
+- 100ms white
+- 100ms off
+- 100ms white
+
+This sequence will be repeated permanently.
