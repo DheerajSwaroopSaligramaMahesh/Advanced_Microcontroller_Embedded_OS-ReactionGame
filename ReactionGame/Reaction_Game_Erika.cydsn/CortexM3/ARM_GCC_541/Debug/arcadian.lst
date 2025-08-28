@@ -1,0 +1,1885 @@
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"arcadian.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.fader_Effect,"ax",%progbits
+  20              		.align	2
+  21              		.global	fader_Effect
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	fader_Effect, %function
+  25              	fader_Effect:
+  26              	.LFB110:
+  27              		.file 1 "arcadian.c"
+   1:arcadian.c    **** /* ========================================
+   2:arcadian.c    ****  *
+   3:arcadian.c    ****  * Copyright YOUR COMPANY, THE YEAR
+   4:arcadian.c    ****  * All Rights Reserved
+   5:arcadian.c    ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:arcadian.c    ****  *
+   7:arcadian.c    ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:arcadian.c    ****  * WHICH IS THE PROPERTY OF your company.
+   9:arcadian.c    ****  *
+  10:arcadian.c    ****  * ========================================
+  11:arcadian.c    **** */
+  12:arcadian.c    **** 
+  13:arcadian.c    **** /**
+  14:arcadian.c    ****  * @file arcadian.c
+  15:arcadian.c    ****  * @brief Implementation of LED fading and glowing operations.
+  16:arcadian.c    ****  */
+  17:arcadian.c    **** 
+  18:arcadian.c    **** #include "project.h"
+  19:arcadian.c    **** #include "arcadian.h"
+  20:arcadian.c    **** 
+  21:arcadian.c    **** /**
+  22:arcadian.c    ****  * @brief Table defining a sequence of RGB colors and durations for glowing the LED.
+  23:arcadian.c    ****  */
+  24:arcadian.c    **** const RG_Glow_t RG_glow_table[] =
+  25:arcadian.c    **** {
+  26:arcadian.c    ****   //Red  Green  Blue  TimeInMS
+  27:arcadian.c    ****     {255,  0,    0,    500},      // Red
+  28:arcadian.c    ****     { 0,  255,   0,    500},      // Green
+  29:arcadian.c    ****     { 0,   0,   255,   500},      // Blue
+  30:arcadian.c    ****     { 0,   0,    0,    100},      // Off
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 2
+
+
+  31:arcadian.c    ****     {255, 255,  255,   100},      // White
+  32:arcadian.c    ****     { 0,   0,    0,    100},      // Off
+  33:arcadian.c    ****     {255, 255,  255,   100},      // White
+  34:arcadian.c    ****     { 0,   0,    0,    100},      // Off
+  35:arcadian.c    ****     {255, 255,  255,   100},      // White
+  36:arcadian.c    **** };
+  37:arcadian.c    **** 
+  38:arcadian.c    **** /**
+  39:arcadian.c    **** * Function to fade and cycle through Red yellow and green LEDs
+  40:arcadian.c    **** * @param none
+  41:arcadian.c    **** * @return RC_SUCCESS if ok
+  42:arcadian.c    **** */
+  43:arcadian.c    **** RC_t fader_Effect()
+  44:arcadian.c    **** {
+  28              		.loc 1 44 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+  45:arcadian.c    ****     // Initialization of led Intensity
+  46:arcadian.c    ****     static unsigned int redIntense = 0, yellowIntense = 0, greenIntense = 0;
+  47:arcadian.c    ****     
+  48:arcadian.c    ****     SetRelAlarm(alrm_fader, 10, 5);
+  36              		.loc 1 48 0
+  37 0002 0522     		movs	r2, #5
+  38 0004 0A21     		movs	r1, #10
+  39 0006 0220     		movs	r0, #2
+  40 0008 FFF7FEFF 		bl	EE_oo_SetRelAlarm
+  41              	.LVL0:
+  49:arcadian.c    ****     if (redIntense < 255 && yellowIntense == 0 && greenIntense == 0) 
+  42              		.loc 1 49 0
+  43 000c 254B     		ldr	r3, .L7
+  44 000e 1868     		ldr	r0, [r3]
+  45 0010 FE28     		cmp	r0, #254
+  46 0012 0FD8     		bhi	.L2
+  47              		.loc 1 49 0 is_stmt 0 discriminator 1
+  48 0014 5B68     		ldr	r3, [r3, #4]
+  49 0016 6BB9     		cbnz	r3, .L2
+  50              		.loc 1 49 0 discriminator 2
+  51 0018 224B     		ldr	r3, .L7
+  52 001a 9B68     		ldr	r3, [r3, #8]
+  53 001c 53B9     		cbnz	r3, .L2
+  50:arcadian.c    ****     {
+  51:arcadian.c    ****         // Increase Red
+  52:arcadian.c    ****         LED_RGB_Set(redIntense, 0, 255 - redIntense);
+  54              		.loc 1 52 0 is_stmt 1
+  55 001e C0B2     		uxtb	r0, r0
+  56 0020 C243     		mvns	r2, r0
+  57 0022 D2B2     		uxtb	r2, r2
+  58 0024 0021     		movs	r1, #0
+  59 0026 FFF7FEFF 		bl	LED_RGB_Set
+  60              	.LVL1:
+  53:arcadian.c    ****         redIntense++;
+  61              		.loc 1 53 0
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 3
+
+
+  62 002a 1E4A     		ldr	r2, .L7
+  63 002c 1368     		ldr	r3, [r2]
+  64 002e 0133     		adds	r3, r3, #1
+  65 0030 1360     		str	r3, [r2]
+  66 0032 34E0     		b	.L3
+  67              	.L2:
+  54:arcadian.c    ****     } 
+  55:arcadian.c    ****     else if (redIntense == 255 && yellowIntense < 255 && greenIntense == 0)
+  68              		.loc 1 55 0
+  69 0034 FF28     		cmp	r0, #255
+  70 0036 15D1     		bne	.L4
+  71              		.loc 1 55 0 is_stmt 0 discriminator 1
+  72 0038 1A4B     		ldr	r3, .L7
+  73 003a 5968     		ldr	r1, [r3, #4]
+  74 003c FE29     		cmp	r1, #254
+  75 003e 11D8     		bhi	.L4
+  76              		.loc 1 55 0 discriminator 2
+  77 0040 9B68     		ldr	r3, [r3, #8]
+  78 0042 7BB9     		cbnz	r3, .L4
+  56:arcadian.c    ****     {
+  57:arcadian.c    ****         // Decrease Red, Increase Yellow
+  58:arcadian.c    ****         LED_RGB_Set(255 - yellowIntense, yellowIntense, 0);
+  79              		.loc 1 58 0 is_stmt 1
+  80 0044 C9B2     		uxtb	r1, r1
+  81 0046 C843     		mvns	r0, r1
+  82 0048 0022     		movs	r2, #0
+  83 004a C0B2     		uxtb	r0, r0
+  84 004c FFF7FEFF 		bl	LED_RGB_Set
+  85              	.LVL2:
+  59:arcadian.c    ****         yellowIntense++;
+  86              		.loc 1 59 0
+  87 0050 144A     		ldr	r2, .L7
+  88 0052 5368     		ldr	r3, [r2, #4]
+  89 0054 0133     		adds	r3, r3, #1
+  90 0056 5360     		str	r3, [r2, #4]
+  60:arcadian.c    ****         
+  61:arcadian.c    ****         if(yellowIntense == 255)
+  91              		.loc 1 61 0
+  92 0058 FF2B     		cmp	r3, #255
+  93 005a 20D1     		bne	.L3
+  62:arcadian.c    ****         {
+  63:arcadian.c    ****             redIntense = 0;
+  94              		.loc 1 63 0
+  95 005c 0022     		movs	r2, #0
+  96 005e 114B     		ldr	r3, .L7
+  97 0060 1A60     		str	r2, [r3]
+  98 0062 1CE0     		b	.L3
+  99              	.L4:
+  64:arcadian.c    ****         }
+  65:arcadian.c    ****     }
+  66:arcadian.c    ****     else if(redIntense == 0 && yellowIntense == 255 && greenIntense < 255)
+ 100              		.loc 1 66 0
+ 101 0064 B0B9     		cbnz	r0, .L5
+ 102              		.loc 1 66 0 is_stmt 0 discriminator 1
+ 103 0066 0F4B     		ldr	r3, .L7
+ 104 0068 5B68     		ldr	r3, [r3, #4]
+ 105 006a FF2B     		cmp	r3, #255
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 4
+
+
+ 106 006c 12D1     		bne	.L5
+ 107              		.loc 1 66 0 discriminator 2
+ 108 006e 0D4B     		ldr	r3, .L7
+ 109 0070 9A68     		ldr	r2, [r3, #8]
+ 110 0072 FE2A     		cmp	r2, #254
+ 111 0074 0ED8     		bhi	.L5
+  67:arcadian.c    ****     {
+  68:arcadian.c    ****         // Decrease yellow, Increase Green
+  69:arcadian.c    ****         LED_RGB_Set(0, 255 - greenIntense, greenIntense);
+ 112              		.loc 1 69 0 is_stmt 1
+ 113 0076 D2B2     		uxtb	r2, r2
+ 114 0078 D143     		mvns	r1, r2
+ 115 007a C9B2     		uxtb	r1, r1
+ 116 007c FFF7FEFF 		bl	LED_RGB_Set
+ 117              	.LVL3:
+  70:arcadian.c    ****         greenIntense++;
+ 118              		.loc 1 70 0
+ 119 0080 084A     		ldr	r2, .L7
+ 120 0082 9368     		ldr	r3, [r2, #8]
+ 121 0084 0133     		adds	r3, r3, #1
+ 122 0086 9360     		str	r3, [r2, #8]
+  71:arcadian.c    ****         
+  72:arcadian.c    ****         if(greenIntense == 255)
+ 123              		.loc 1 72 0
+ 124 0088 FF2B     		cmp	r3, #255
+ 125 008a 08D1     		bne	.L3
+  73:arcadian.c    ****         {
+  74:arcadian.c    ****             yellowIntense = 0;
+ 126              		.loc 1 74 0
+ 127 008c 0022     		movs	r2, #0
+ 128 008e 054B     		ldr	r3, .L7
+ 129 0090 5A60     		str	r2, [r3, #4]
+ 130 0092 04E0     		b	.L3
+ 131              	.L5:
+  75:arcadian.c    ****         }
+  76:arcadian.c    ****     }
+  77:arcadian.c    ****     else
+  78:arcadian.c    ****     {
+  79:arcadian.c    ****         // Reset intensities
+  80:arcadian.c    ****         redIntense = 0;
+ 132              		.loc 1 80 0
+ 133 0094 034B     		ldr	r3, .L7
+ 134 0096 0022     		movs	r2, #0
+ 135 0098 1A60     		str	r2, [r3]
+  81:arcadian.c    ****         yellowIntense = 0;
+ 136              		.loc 1 81 0
+ 137 009a 5A60     		str	r2, [r3, #4]
+  82:arcadian.c    ****         greenIntense = 0;
+ 138              		.loc 1 82 0
+ 139 009c 9A60     		str	r2, [r3, #8]
+ 140              	.L3:
+  83:arcadian.c    ****     }
+  84:arcadian.c    ****     
+  85:arcadian.c    ****     return RC_SUCCESS;
+  86:arcadian.c    **** }
+ 141              		.loc 1 86 0
+ 142 009e 0020     		movs	r0, #0
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 5
+
+
+ 143 00a0 08BD     		pop	{r3, pc}
+ 144              	.L8:
+ 145 00a2 00BF     		.align	2
+ 146              	.L7:
+ 147 00a4 00000000 		.word	.LANCHOR0
+ 148              		.cfi_endproc
+ 149              	.LFE110:
+ 150              		.size	fader_Effect, .-fader_Effect
+ 151              		.section	.text.glower_Effect,"ax",%progbits
+ 152              		.align	2
+ 153              		.global	glower_Effect
+ 154              		.thumb
+ 155              		.thumb_func
+ 156              		.type	glower_Effect, %function
+ 157              	glower_Effect:
+ 158              	.LFB111:
+  87:arcadian.c    **** 
+  88:arcadian.c    **** /**
+  89:arcadian.c    **** * Function to glow and cycle through the RGB LED
+  90:arcadian.c    **** * @param none 
+  91:arcadian.c    **** * @return RC_SUCCESS if ok
+  92:arcadian.c    **** */
+  93:arcadian.c    **** RC_t glower_Effect()
+  94:arcadian.c    **** {
+ 159              		.loc 1 94 0
+ 160              		.cfi_startproc
+ 161              		@ args = 0, pretend = 0, frame = 0
+ 162              		@ frame_needed = 0, uses_anonymous_args = 0
+ 163 0000 38B5     		push	{r3, r4, r5, lr}
+ 164              		.cfi_def_cfa_offset 16
+ 165              		.cfi_offset 3, -16
+ 166              		.cfi_offset 4, -12
+ 167              		.cfi_offset 5, -8
+ 168              		.cfi_offset 14, -4
+  95:arcadian.c    ****     static int i = 0;
+  96:arcadian.c    ****     
+  97:arcadian.c    ****     if(i < 9)
+ 169              		.loc 1 97 0
+ 170 0002 174B     		ldr	r3, .L13
+ 171 0004 DB68     		ldr	r3, [r3, #12]
+ 172 0006 082B     		cmp	r3, #8
+ 173 0008 25DC     		bgt	.L10
+  98:arcadian.c    ****     {
+  99:arcadian.c    ****         SetRelAlarm(alrm_glower,10, RG_glow_table[i].duration);
+ 174              		.loc 1 99 0
+ 175 000a 164D     		ldr	r5, .L13+4
+ 176 000c 03EB4303 		add	r3, r3, r3, lsl #1
+ 177 0010 5A00     		lsls	r2, r3, #1
+ 178 0012 2A44     		add	r2, r2, r5
+ 179 0014 9288     		ldrh	r2, [r2, #4]
+ 180 0016 0A21     		movs	r1, #10
+ 181 0018 0320     		movs	r0, #3
+ 182 001a FFF7FEFF 		bl	EE_oo_SetRelAlarm
+ 183              	.LVL4:
+ 100:arcadian.c    ****         RGB_PWM_red_WriteCompare(RG_glow_table[i].red_rgb);
+ 184              		.loc 1 100 0
+ 185 001e 104C     		ldr	r4, .L13
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 6
+
+
+ 186 0020 E368     		ldr	r3, [r4, #12]
+ 187 0022 03EB4303 		add	r3, r3, r3, lsl #1
+ 188 0026 5A00     		lsls	r2, r3, #1
+ 189 0028 A85C     		ldrb	r0, [r5, r2]	@ zero_extendqisi2
+ 190 002a FFF7FEFF 		bl	RGB_PWM_red_WriteCompare
+ 191              	.LVL5:
+ 101:arcadian.c    ****         RGB_PWM_green_WriteCompare(RG_glow_table[i].green_rgb);
+ 192              		.loc 1 101 0
+ 193 002e E368     		ldr	r3, [r4, #12]
+ 194 0030 03EB4303 		add	r3, r3, r3, lsl #1
+ 195 0034 5A00     		lsls	r2, r3, #1
+ 196 0036 2A44     		add	r2, r2, r5
+ 197 0038 5078     		ldrb	r0, [r2, #1]	@ zero_extendqisi2
+ 198 003a FFF7FEFF 		bl	RGB_PWM_green_WriteCompare
+ 199              	.LVL6:
+ 102:arcadian.c    ****         RGB_PWM_blue_WriteCompare(RG_glow_table[i].blue_rgb);
+ 200              		.loc 1 102 0
+ 201 003e E368     		ldr	r3, [r4, #12]
+ 202 0040 03EB4303 		add	r3, r3, r3, lsl #1
+ 203 0044 5A00     		lsls	r2, r3, #1
+ 204 0046 1544     		add	r5, r5, r2
+ 205 0048 A878     		ldrb	r0, [r5, #2]	@ zero_extendqisi2
+ 206 004a FFF7FEFF 		bl	RGB_PWM_blue_WriteCompare
+ 207              	.LVL7:
+ 103:arcadian.c    ****         i++;
+ 208              		.loc 1 103 0
+ 209 004e E368     		ldr	r3, [r4, #12]
+ 210 0050 0133     		adds	r3, r3, #1
+ 211 0052 E360     		str	r3, [r4, #12]
+ 212 0054 02E0     		b	.L11
+ 213              	.L10:
+ 104:arcadian.c    ****     }
+ 105:arcadian.c    ****     else
+ 106:arcadian.c    ****     {
+ 107:arcadian.c    ****         i = 0;
+ 214              		.loc 1 107 0
+ 215 0056 0022     		movs	r2, #0
+ 216 0058 014B     		ldr	r3, .L13
+ 217 005a DA60     		str	r2, [r3, #12]
+ 218              	.L11:
+ 108:arcadian.c    ****     }
+ 109:arcadian.c    ****     
+ 110:arcadian.c    ****     return RC_SUCCESS;
+ 111:arcadian.c    **** }
+ 219              		.loc 1 111 0
+ 220 005c 0020     		movs	r0, #0
+ 221 005e 38BD     		pop	{r3, r4, r5, pc}
+ 222              	.L14:
+ 223              		.align	2
+ 224              	.L13:
+ 225 0060 00000000 		.word	.LANCHOR0
+ 226 0064 00000000 		.word	.LANCHOR1
+ 227              		.cfi_endproc
+ 228              	.LFE111:
+ 229              		.size	glower_Effect, .-glower_Effect
+ 230              		.section	.text.Functsk_fader,"ax",%progbits
+ 231              		.align	2
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 7
+
+
+ 232              		.global	Functsk_fader
+ 233              		.thumb
+ 234              		.thumb_func
+ 235              		.type	Functsk_fader, %function
+ 236              	Functsk_fader:
+ 237              	.LFB112:
+ 112:arcadian.c    **** 
+ 113:arcadian.c    **** // StartFader TASK starts the fader sequence
+ 114:arcadian.c    **** TASK(tsk_fader)
+ 115:arcadian.c    **** {
+ 238              		.loc 1 115 0
+ 239              		.cfi_startproc
+ 240              		@ args = 0, pretend = 0, frame = 0
+ 241              		@ frame_needed = 0, uses_anonymous_args = 0
+ 242 0000 08B5     		push	{r3, lr}
+ 243              		.cfi_def_cfa_offset 8
+ 244              		.cfi_offset 3, -8
+ 245              		.cfi_offset 14, -4
+ 116:arcadian.c    ****    fader_Effect();
+ 246              		.loc 1 116 0
+ 247 0002 FFF7FEFF 		bl	fader_Effect
+ 248              	.LVL8:
+ 117:arcadian.c    ****    TerminateTask();
+ 249              		.loc 1 117 0
+ 250 0006 FFF7FEFF 		bl	EE_oo_TerminateTask
+ 251              	.LVL9:
+ 252 000a 08BD     		pop	{r3, pc}
+ 253              		.cfi_endproc
+ 254              	.LFE112:
+ 255              		.size	Functsk_fader, .-Functsk_fader
+ 256              		.section	.text.Functsk_glower,"ax",%progbits
+ 257              		.align	2
+ 258              		.global	Functsk_glower
+ 259              		.thumb
+ 260              		.thumb_func
+ 261              		.type	Functsk_glower, %function
+ 262              	Functsk_glower:
+ 263              	.LFB113:
+ 118:arcadian.c    **** }
+ 119:arcadian.c    **** 
+ 120:arcadian.c    **** // StartGlower TASK starts the glower sequence
+ 121:arcadian.c    **** TASK(tsk_glower)
+ 122:arcadian.c    **** {
+ 264              		.loc 1 122 0
+ 265              		.cfi_startproc
+ 266              		@ args = 0, pretend = 0, frame = 0
+ 267              		@ frame_needed = 0, uses_anonymous_args = 0
+ 268 0000 08B5     		push	{r3, lr}
+ 269              		.cfi_def_cfa_offset 8
+ 270              		.cfi_offset 3, -8
+ 271              		.cfi_offset 14, -4
+ 123:arcadian.c    ****    glower_Effect();
+ 272              		.loc 1 123 0
+ 273 0002 FFF7FEFF 		bl	glower_Effect
+ 274              	.LVL10:
+ 124:arcadian.c    ****    TerminateTask();
+ 275              		.loc 1 124 0
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 8
+
+
+ 276 0006 FFF7FEFF 		bl	EE_oo_TerminateTask
+ 277              	.LVL11:
+ 278 000a 08BD     		pop	{r3, pc}
+ 279              		.cfi_endproc
+ 280              	.LFE113:
+ 281              		.size	Functsk_glower, .-Functsk_glower
+ 282              		.global	RG_glow_table
+ 283              		.section	.rodata
+ 284              		.align	2
+ 285              		.set	.LANCHOR1,. + 0
+ 286              		.type	RG_glow_table, %object
+ 287              		.size	RG_glow_table, 54
+ 288              	RG_glow_table:
+ 289 0000 FF       		.byte	-1
+ 290 0001 00       		.byte	0
+ 291 0002 00       		.byte	0
+ 292 0003 00       		.space	1
+ 293 0004 F401     		.short	500
+ 294 0006 00       		.byte	0
+ 295 0007 FF       		.byte	-1
+ 296 0008 00       		.byte	0
+ 297 0009 00       		.space	1
+ 298 000a F401     		.short	500
+ 299 000c 00       		.byte	0
+ 300 000d 00       		.byte	0
+ 301 000e FF       		.byte	-1
+ 302 000f 00       		.space	1
+ 303 0010 F401     		.short	500
+ 304 0012 00       		.byte	0
+ 305 0013 00       		.byte	0
+ 306 0014 00       		.byte	0
+ 307 0015 00       		.space	1
+ 308 0016 6400     		.short	100
+ 309 0018 FF       		.byte	-1
+ 310 0019 FF       		.byte	-1
+ 311 001a FF       		.byte	-1
+ 312 001b 00       		.space	1
+ 313 001c 6400     		.short	100
+ 314 001e 00       		.byte	0
+ 315 001f 00       		.byte	0
+ 316 0020 00       		.byte	0
+ 317 0021 00       		.space	1
+ 318 0022 6400     		.short	100
+ 319 0024 FF       		.byte	-1
+ 320 0025 FF       		.byte	-1
+ 321 0026 FF       		.byte	-1
+ 322 0027 00       		.space	1
+ 323 0028 6400     		.short	100
+ 324 002a 00       		.byte	0
+ 325 002b 00       		.byte	0
+ 326 002c 00       		.byte	0
+ 327 002d 00       		.space	1
+ 328 002e 6400     		.short	100
+ 329 0030 FF       		.byte	-1
+ 330 0031 FF       		.byte	-1
+ 331 0032 FF       		.byte	-1
+ 332 0033 00       		.space	1
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 9
+
+
+ 333 0034 6400     		.short	100
+ 334              		.bss
+ 335              		.align	2
+ 336              		.set	.LANCHOR0,. + 0
+ 337              		.type	redIntense.6713, %object
+ 338              		.size	redIntense.6713, 4
+ 339              	redIntense.6713:
+ 340 0000 00000000 		.space	4
+ 341              		.type	yellowIntense.6714, %object
+ 342              		.size	yellowIntense.6714, 4
+ 343              	yellowIntense.6714:
+ 344 0004 00000000 		.space	4
+ 345              		.type	greenIntense.6715, %object
+ 346              		.size	greenIntense.6715, 4
+ 347              	greenIntense.6715:
+ 348 0008 00000000 		.space	4
+ 349              		.type	i.6718, %object
+ 350              		.size	i.6718, 4
+ 351              	i.6718:
+ 352 000c 00000000 		.space	4
+ 353              		.text
+ 354              	.Letext0:
+ 355              		.file 2 "d:\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4.1\\arm-none-eabi\\include\\mac
+ 356              		.file 3 "d:\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4.1\\arm-none-eabi\\include\\sys
+ 357              		.file 4 "Generated_Source\\PSoC5/Erika_OS_common_ee_types.inc"
+ 358              		.file 5 "Generated_Source\\PSoC5/Erika_OS_cortex_mx_ee_cpu.inc"
+ 359              		.file 6 ".\\source\\bsw/global.h"
+ 360              		.file 7 "arcadian.h"
+ 361              		.file 8 "Generated_Source\\PSoC5/Erika_OS_ee_oo_intfunc.inc"
+ 362              		.file 9 "Generated_Source\\PSoC5/Erika_OS_cortex_mx_ee_context.inc"
+ 363              		.file 10 "Generated_Source\\PSoC5/Erika_OS_common_ee_primitives.inc"
+ 364              		.file 11 "Generated_Source\\PSoC5/core_cm3.h"
+ 365              		.file 12 "Generated_Source\\PSoC5/Erika_OS_ee_oo_kernel.inc"
+ 366              		.file 13 ".\\source\\bsw/led.h"
+ 367              		.file 14 "Generated_Source\\PSoC5/RGB_PWM_red.h"
+ 368              		.file 15 "Generated_Source\\PSoC5/RGB_PWM_green.h"
+ 369              		.file 16 "Generated_Source\\PSoC5/RGB_PWM_blue.h"
+ 370              		.section	.debug_info,"",%progbits
+ 371              	.Ldebug_info0:
+ 372 0000 01040000 		.4byte	0x401
+ 373 0004 0400     		.2byte	0x4
+ 374 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 375 000a 04       		.byte	0x4
+ 376 000b 01       		.uleb128 0x1
+ 377 000c 7C030000 		.4byte	.LASF76
+ 378 0010 0C       		.byte	0xc
+ 379 0011 CD000000 		.4byte	.LASF77
+ 380 0015 C0020000 		.4byte	.LASF78
+ 381 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 382 001d 00000000 		.4byte	0
+ 383 0021 00000000 		.4byte	.Ldebug_line0
+ 384 0025 02       		.uleb128 0x2
+ 385 0026 01       		.byte	0x1
+ 386 0027 06       		.byte	0x6
+ 387 0028 9D020000 		.4byte	.LASF0
+ 388 002c 03       		.uleb128 0x3
+ 389 002d 11020000 		.4byte	.LASF3
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 10
+
+
+ 390 0031 02       		.byte	0x2
+ 391 0032 1D       		.byte	0x1d
+ 392 0033 37000000 		.4byte	0x37
+ 393 0037 02       		.uleb128 0x2
+ 394 0038 01       		.byte	0x1
+ 395 0039 08       		.byte	0x8
+ 396 003a 60020000 		.4byte	.LASF1
+ 397 003e 02       		.uleb128 0x2
+ 398 003f 02       		.byte	0x2
+ 399 0040 05       		.byte	0x5
+ 400 0041 6A000000 		.4byte	.LASF2
+ 401 0045 03       		.uleb128 0x3
+ 402 0046 E2000000 		.4byte	.LASF4
+ 403 004a 02       		.byte	0x2
+ 404 004b 2B       		.byte	0x2b
+ 405 004c 50000000 		.4byte	0x50
+ 406 0050 02       		.uleb128 0x2
+ 407 0051 02       		.byte	0x2
+ 408 0052 07       		.byte	0x7
+ 409 0053 69030000 		.4byte	.LASF5
+ 410 0057 03       		.uleb128 0x3
+ 411 0058 B8040000 		.4byte	.LASF6
+ 412 005c 02       		.byte	0x2
+ 413 005d 3F       		.byte	0x3f
+ 414 005e 62000000 		.4byte	0x62
+ 415 0062 02       		.uleb128 0x2
+ 416 0063 04       		.byte	0x4
+ 417 0064 05       		.byte	0x5
+ 418 0065 DB010000 		.4byte	.LASF7
+ 419 0069 02       		.uleb128 0x2
+ 420 006a 04       		.byte	0x4
+ 421 006b 07       		.byte	0x7
+ 422 006c 85040000 		.4byte	.LASF8
+ 423 0070 02       		.uleb128 0x2
+ 424 0071 08       		.byte	0x8
+ 425 0072 05       		.byte	0x5
+ 426 0073 90010000 		.4byte	.LASF9
+ 427 0077 02       		.uleb128 0x2
+ 428 0078 08       		.byte	0x8
+ 429 0079 07       		.byte	0x7
+ 430 007a A9020000 		.4byte	.LASF10
+ 431 007e 04       		.uleb128 0x4
+ 432 007f 04       		.byte	0x4
+ 433 0080 05       		.byte	0x5
+ 434 0081 696E7400 		.ascii	"int\000"
+ 435 0085 02       		.uleb128 0x2
+ 436 0086 04       		.byte	0x4
+ 437 0087 07       		.byte	0x7
+ 438 0088 19030000 		.4byte	.LASF11
+ 439 008c 03       		.uleb128 0x3
+ 440 008d FE000000 		.4byte	.LASF12
+ 441 0091 03       		.byte	0x3
+ 442 0092 18       		.byte	0x18
+ 443 0093 2C000000 		.4byte	0x2c
+ 444 0097 03       		.uleb128 0x3
+ 445 0098 29040000 		.4byte	.LASF13
+ 446 009c 03       		.byte	0x3
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 11
+
+
+ 447 009d 24       		.byte	0x24
+ 448 009e 45000000 		.4byte	0x45
+ 449 00a2 03       		.uleb128 0x3
+ 450 00a3 47040000 		.4byte	.LASF14
+ 451 00a7 03       		.byte	0x3
+ 452 00a8 2C       		.byte	0x2c
+ 453 00a9 57000000 		.4byte	0x57
+ 454 00ad 02       		.uleb128 0x2
+ 455 00ae 04       		.byte	0x4
+ 456 00af 04       		.byte	0x4
+ 457 00b0 8A010000 		.4byte	.LASF15
+ 458 00b4 02       		.uleb128 0x2
+ 459 00b5 08       		.byte	0x8
+ 460 00b6 04       		.byte	0x4
+ 461 00b7 97040000 		.4byte	.LASF16
+ 462 00bb 02       		.uleb128 0x2
+ 463 00bc 01       		.byte	0x1
+ 464 00bd 08       		.byte	0x8
+ 465 00be 24040000 		.4byte	.LASF17
+ 466 00c2 02       		.uleb128 0x2
+ 467 00c3 08       		.byte	0x8
+ 468 00c4 04       		.byte	0x4
+ 469 00c5 54020000 		.4byte	.LASF18
+ 470 00c9 02       		.uleb128 0x2
+ 471 00ca 04       		.byte	0x4
+ 472 00cb 07       		.byte	0x7
+ 473 00cc 9A000000 		.4byte	.LASF19
+ 474 00d0 03       		.uleb128 0x3
+ 475 00d1 60030000 		.4byte	.LASF20
+ 476 00d5 04       		.byte	0x4
+ 477 00d6 53       		.byte	0x53
+ 478 00d7 7E000000 		.4byte	0x7e
+ 479 00db 03       		.uleb128 0x3
+ 480 00dc D8000000 		.4byte	.LASF21
+ 481 00e0 04       		.byte	0x4
+ 482 00e1 54       		.byte	0x54
+ 483 00e2 85000000 		.4byte	0x85
+ 484 00e6 03       		.uleb128 0x3
+ 485 00e7 B0040000 		.4byte	.LASF22
+ 486 00eb 05       		.byte	0x5
+ 487 00ec 4D       		.byte	0x4d
+ 488 00ed DB000000 		.4byte	0xdb
+ 489 00f1 03       		.uleb128 0x3
+ 490 00f2 B1000000 		.4byte	.LASF23
+ 491 00f6 05       		.byte	0x5
+ 492 00f7 4F       		.byte	0x4f
+ 493 00f8 DB000000 		.4byte	0xdb
+ 494 00fc 03       		.uleb128 0x3
+ 495 00fd ED000000 		.4byte	.LASF24
+ 496 0101 05       		.byte	0x5
+ 497 0102 78       		.byte	0x78
+ 498 0103 D0000000 		.4byte	0xd0
+ 499 0107 05       		.uleb128 0x5
+ 500 0108 65524300 		.ascii	"eRC\000"
+ 501 010c 01       		.byte	0x1
+ 502 010d 25000000 		.4byte	0x25
+ 503 0111 06       		.byte	0x6
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 12
+
+
+ 504 0112 AC       		.byte	0xac
+ 505 0113 AE010000 		.4byte	0x1ae
+ 506 0117 06       		.uleb128 0x6
+ 507 0118 40000000 		.4byte	.LASF25
+ 508 011c 00       		.byte	0
+ 509 011d 07       		.uleb128 0x7
+ 510 011e 05050000 		.4byte	.LASF26
+ 511 0122 7F       		.sleb128 -1
+ 512 0123 07       		.uleb128 0x7
+ 513 0124 3C030000 		.4byte	.LASF27
+ 514 0128 7E       		.sleb128 -2
+ 515 0129 07       		.uleb128 0x7
+ 516 012a A3000000 		.4byte	.LASF28
+ 517 012e 7D       		.sleb128 -3
+ 518 012f 07       		.uleb128 0x7
+ 519 0130 0E050000 		.4byte	.LASF29
+ 520 0134 7C       		.sleb128 -4
+ 521 0135 07       		.uleb128 0x7
+ 522 0136 6D010000 		.4byte	.LASF30
+ 523 013a 7B       		.sleb128 -5
+ 524 013b 07       		.uleb128 0x7
+ 525 013c 74000000 		.4byte	.LASF31
+ 526 0140 7A       		.sleb128 -6
+ 527 0141 07       		.uleb128 0x7
+ 528 0142 E4010000 		.4byte	.LASF32
+ 529 0146 79       		.sleb128 -7
+ 530 0147 07       		.uleb128 0x7
+ 531 0148 32040000 		.4byte	.LASF33
+ 532 014c 78       		.sleb128 -8
+ 533 014d 07       		.uleb128 0x7
+ 534 014e 4A030000 		.4byte	.LASF34
+ 535 0152 77       		.sleb128 -9
+ 536 0153 07       		.uleb128 0x7
+ 537 0154 03020000 		.4byte	.LASF35
+ 538 0158 76       		.sleb128 -10
+ 539 0159 07       		.uleb128 0x7
+ 540 015a 3B050000 		.4byte	.LASF36
+ 541 015e 75       		.sleb128 -11
+ 542 015f 07       		.uleb128 0x7
+ 543 0160 26030000 		.4byte	.LASF37
+ 544 0164 74       		.sleb128 -12
+ 545 0165 07       		.uleb128 0x7
+ 546 0166 9E040000 		.4byte	.LASF38
+ 547 016a 73       		.sleb128 -13
+ 548 016b 07       		.uleb128 0x7
+ 549 016c 2D000000 		.4byte	.LASF39
+ 550 0170 72       		.sleb128 -14
+ 551 0171 07       		.uleb128 0x7
+ 552 0172 4B000000 		.4byte	.LASF40
+ 553 0176 71       		.sleb128 -15
+ 554 0177 07       		.uleb128 0x7
+ 555 0178 1B020000 		.4byte	.LASF41
+ 556 017c 70       		.sleb128 -16
+ 557 017d 07       		.uleb128 0x7
+ 558 017e B9000000 		.4byte	.LASF42
+ 559 0182 6F       		.sleb128 -17
+ 560 0183 07       		.uleb128 0x7
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 13
+
+
+ 561 0184 85000000 		.4byte	.LASF43
+ 562 0188 6E       		.sleb128 -18
+ 563 0189 07       		.uleb128 0x7
+ 564 018a B7010000 		.4byte	.LASF44
+ 565 018e 6D       		.sleb128 -19
+ 566 018f 07       		.uleb128 0x7
+ 567 0190 8A020000 		.4byte	.LASF45
+ 568 0194 6C       		.sleb128 -20
+ 569 0195 07       		.uleb128 0x7
+ 570 0196 78020000 		.4byte	.LASF46
+ 571 019a 6B       		.sleb128 -21
+ 572 019b 07       		.uleb128 0x7
+ 573 019c DD040000 		.4byte	.LASF47
+ 574 01a0 6A       		.sleb128 -22
+ 575 01a1 07       		.uleb128 0x7
+ 576 01a2 06010000 		.4byte	.LASF48
+ 577 01a6 69       		.sleb128 -23
+ 578 01a7 07       		.uleb128 0x7
+ 579 01a8 CA010000 		.4byte	.LASF49
+ 580 01ac 68       		.sleb128 -24
+ 581 01ad 00       		.byte	0
+ 582 01ae 03       		.uleb128 0x3
+ 583 01af 36050000 		.4byte	.LASF50
+ 584 01b3 06       		.byte	0x6
+ 585 01b4 C8       		.byte	0xc8
+ 586 01b5 07010000 		.4byte	0x107
+ 587 01b9 08       		.uleb128 0x8
+ 588 01ba 06       		.byte	0x6
+ 589 01bb 07       		.byte	0x7
+ 590 01bc 29       		.byte	0x29
+ 591 01bd F2010000 		.4byte	0x1f2
+ 592 01c1 09       		.uleb128 0x9
+ 593 01c2 34030000 		.4byte	.LASF51
+ 594 01c6 07       		.byte	0x7
+ 595 01c7 2B       		.byte	0x2b
+ 596 01c8 8C000000 		.4byte	0x8c
+ 597 01cc 00       		.byte	0
+ 598 01cd 09       		.uleb128 0x9
+ 599 01ce 6E020000 		.4byte	.LASF52
+ 600 01d2 07       		.byte	0x7
+ 601 01d3 2C       		.byte	0x2c
+ 602 01d4 8C000000 		.4byte	0x8c
+ 603 01d8 01       		.byte	0x1
+ 604 01d9 09       		.uleb128 0x9
+ 605 01da EF040000 		.4byte	.LASF53
+ 606 01de 07       		.byte	0x7
+ 607 01df 2D       		.byte	0x2d
+ 608 01e0 8C000000 		.4byte	0x8c
+ 609 01e4 02       		.byte	0x2
+ 610 01e5 09       		.uleb128 0x9
+ 611 01e6 69040000 		.4byte	.LASF54
+ 612 01ea 07       		.byte	0x7
+ 613 01eb 2E       		.byte	0x2e
+ 614 01ec 97000000 		.4byte	0x97
+ 615 01f0 04       		.byte	0x4
+ 616 01f1 00       		.byte	0
+ 617 01f2 03       		.uleb128 0x3
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 14
+
+
+ 618 01f3 F4000000 		.4byte	.LASF55
+ 619 01f7 07       		.byte	0x7
+ 620 01f8 2F       		.byte	0x2f
+ 621 01f9 B9010000 		.4byte	0x1b9
+ 622 01fd 0A       		.uleb128 0xa
+ 623 01fe D0040000 		.4byte	.LASF59
+ 624 0202 01       		.byte	0x1
+ 625 0203 2B       		.byte	0x2b
+ 626 0204 AE010000 		.4byte	0x1ae
+ 627 0208 00000000 		.4byte	.LFB110
+ 628 020c A8000000 		.4byte	.LFE110-.LFB110
+ 629 0210 01       		.uleb128 0x1
+ 630 0211 9C       		.byte	0x9c
+ 631 0212 96020000 		.4byte	0x296
+ 632 0216 0B       		.uleb128 0xb
+ 633 0217 5F000000 		.4byte	.LASF56
+ 634 021b 01       		.byte	0x1
+ 635 021c 2E       		.byte	0x2e
+ 636 021d 85000000 		.4byte	0x85
+ 637 0221 05       		.uleb128 0x5
+ 638 0222 03       		.byte	0x3
+ 639 0223 00000000 		.4byte	redIntense.6713
+ 640 0227 0B       		.uleb128 0xb
+ 641 0228 46010000 		.4byte	.LASF57
+ 642 022c 01       		.byte	0x1
+ 643 022d 2E       		.byte	0x2e
+ 644 022e 85000000 		.4byte	0x85
+ 645 0232 05       		.uleb128 0x5
+ 646 0233 03       		.byte	0x3
+ 647 0234 04000000 		.4byte	yellowIntense.6714
+ 648 0238 0B       		.uleb128 0xb
+ 649 0239 F6010000 		.4byte	.LASF58
+ 650 023d 01       		.byte	0x1
+ 651 023e 2E       		.byte	0x2e
+ 652 023f 85000000 		.4byte	0x85
+ 653 0243 05       		.uleb128 0x5
+ 654 0244 03       		.byte	0x3
+ 655 0245 08000000 		.4byte	greenIntense.6715
+ 656 0249 0C       		.uleb128 0xc
+ 657 024a 0C000000 		.4byte	.LVL0
+ 658 024e C1030000 		.4byte	0x3c1
+ 659 0252 66020000 		.4byte	0x266
+ 660 0256 0D       		.uleb128 0xd
+ 661 0257 01       		.uleb128 0x1
+ 662 0258 50       		.byte	0x50
+ 663 0259 01       		.uleb128 0x1
+ 664 025a 32       		.byte	0x32
+ 665 025b 0D       		.uleb128 0xd
+ 666 025c 01       		.uleb128 0x1
+ 667 025d 51       		.byte	0x51
+ 668 025e 01       		.uleb128 0x1
+ 669 025f 3A       		.byte	0x3a
+ 670 0260 0D       		.uleb128 0xd
+ 671 0261 01       		.uleb128 0x1
+ 672 0262 52       		.byte	0x52
+ 673 0263 01       		.uleb128 0x1
+ 674 0264 35       		.byte	0x35
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 15
+
+
+ 675 0265 00       		.byte	0
+ 676 0266 0C       		.uleb128 0xc
+ 677 0267 2A000000 		.4byte	.LVL1
+ 678 026b CD030000 		.4byte	0x3cd
+ 679 026f 79020000 		.4byte	0x279
+ 680 0273 0D       		.uleb128 0xd
+ 681 0274 01       		.uleb128 0x1
+ 682 0275 51       		.byte	0x51
+ 683 0276 01       		.uleb128 0x1
+ 684 0277 30       		.byte	0x30
+ 685 0278 00       		.byte	0
+ 686 0279 0C       		.uleb128 0xc
+ 687 027a 50000000 		.4byte	.LVL2
+ 688 027e CD030000 		.4byte	0x3cd
+ 689 0282 8C020000 		.4byte	0x28c
+ 690 0286 0D       		.uleb128 0xd
+ 691 0287 01       		.uleb128 0x1
+ 692 0288 52       		.byte	0x52
+ 693 0289 01       		.uleb128 0x1
+ 694 028a 30       		.byte	0x30
+ 695 028b 00       		.byte	0
+ 696 028c 0E       		.uleb128 0xe
+ 697 028d 80000000 		.4byte	.LVL3
+ 698 0291 CD030000 		.4byte	0x3cd
+ 699 0295 00       		.byte	0
+ 700 0296 0A       		.uleb128 0xa
+ 701 0297 4F040000 		.4byte	.LASF60
+ 702 029b 01       		.byte	0x1
+ 703 029c 5D       		.byte	0x5d
+ 704 029d AE010000 		.4byte	0x1ae
+ 705 02a1 00000000 		.4byte	.LFB111
+ 706 02a5 68000000 		.4byte	.LFE111-.LFB111
+ 707 02a9 01       		.uleb128 0x1
+ 708 02aa 9C       		.byte	0x9c
+ 709 02ab FE020000 		.4byte	0x2fe
+ 710 02af 0F       		.uleb128 0xf
+ 711 02b0 6900     		.ascii	"i\000"
+ 712 02b2 01       		.byte	0x1
+ 713 02b3 5F       		.byte	0x5f
+ 714 02b4 7E000000 		.4byte	0x7e
+ 715 02b8 05       		.uleb128 0x5
+ 716 02b9 03       		.byte	0x3
+ 717 02ba 0C000000 		.4byte	i.6718
+ 718 02be 0C       		.uleb128 0xc
+ 719 02bf 1E000000 		.4byte	.LVL4
+ 720 02c3 C1030000 		.4byte	0x3c1
+ 721 02c7 D6020000 		.4byte	0x2d6
+ 722 02cb 0D       		.uleb128 0xd
+ 723 02cc 01       		.uleb128 0x1
+ 724 02cd 50       		.byte	0x50
+ 725 02ce 01       		.uleb128 0x1
+ 726 02cf 33       		.byte	0x33
+ 727 02d0 0D       		.uleb128 0xd
+ 728 02d1 01       		.uleb128 0x1
+ 729 02d2 51       		.byte	0x51
+ 730 02d3 01       		.uleb128 0x1
+ 731 02d4 3A       		.byte	0x3a
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 16
+
+
+ 732 02d5 00       		.byte	0
+ 733 02d6 0E       		.uleb128 0xe
+ 734 02d7 2E000000 		.4byte	.LVL5
+ 735 02db D8030000 		.4byte	0x3d8
+ 736 02df 0E       		.uleb128 0xe
+ 737 02e0 3E000000 		.4byte	.LVL6
+ 738 02e4 E3030000 		.4byte	0x3e3
+ 739 02e8 10       		.uleb128 0x10
+ 740 02e9 4E000000 		.4byte	.LVL7
+ 741 02ed EE030000 		.4byte	0x3ee
+ 742 02f1 0D       		.uleb128 0xd
+ 743 02f2 01       		.uleb128 0x1
+ 744 02f3 50       		.byte	0x50
+ 745 02f4 07       		.uleb128 0x7
+ 746 02f5 75       		.byte	0x75
+ 747 02f6 02       		.sleb128 2
+ 748 02f7 94       		.byte	0x94
+ 749 02f8 01       		.byte	0x1
+ 750 02f9 08       		.byte	0x8
+ 751 02fa FF       		.byte	0xff
+ 752 02fb 1A       		.byte	0x1a
+ 753 02fc 00       		.byte	0
+ 754 02fd 00       		.byte	0
+ 755 02fe 11       		.uleb128 0x11
+ 756 02ff 7C010000 		.4byte	.LASF61
+ 757 0303 01       		.byte	0x1
+ 758 0304 72       		.byte	0x72
+ 759 0305 00000000 		.4byte	.LFB112
+ 760 0309 0C000000 		.4byte	.LFE112-.LFB112
+ 761 030d 01       		.uleb128 0x1
+ 762 030e 9C       		.byte	0x9c
+ 763 030f 26030000 		.4byte	0x326
+ 764 0313 0E       		.uleb128 0xe
+ 765 0314 06000000 		.4byte	.LVL8
+ 766 0318 FD010000 		.4byte	0x1fd
+ 767 031c 0E       		.uleb128 0xe
+ 768 031d 0A000000 		.4byte	.LVL9
+ 769 0321 F9030000 		.4byte	0x3f9
+ 770 0325 00       		.byte	0
+ 771 0326 11       		.uleb128 0x11
+ 772 0327 2C020000 		.4byte	.LASF62
+ 773 032b 01       		.byte	0x1
+ 774 032c 79       		.byte	0x79
+ 775 032d 00000000 		.4byte	.LFB113
+ 776 0331 0C000000 		.4byte	.LFE113-.LFB113
+ 777 0335 01       		.uleb128 0x1
+ 778 0336 9C       		.byte	0x9c
+ 779 0337 4E030000 		.4byte	0x34e
+ 780 033b 0E       		.uleb128 0xe
+ 781 033c 06000000 		.4byte	.LVL10
+ 782 0340 96020000 		.4byte	0x296
+ 783 0344 0E       		.uleb128 0xe
+ 784 0345 0A000000 		.4byte	.LVL11
+ 785 0349 F9030000 		.4byte	0x3f9
+ 786 034d 00       		.byte	0
+ 787 034e 12       		.uleb128 0x12
+ 788 034f 1E050000 		.4byte	.LASF63
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 17
+
+
+ 789 0353 08       		.byte	0x8
+ 790 0354 40       		.byte	0x40
+ 791 0355 E6000000 		.4byte	0xe6
+ 792 0359 12       		.uleb128 0x12
+ 793 035a 9E010000 		.4byte	.LASF64
+ 794 035e 08       		.byte	0x8
+ 795 035f 47       		.byte	0x47
+ 796 0360 F1000000 		.4byte	0xf1
+ 797 0364 12       		.uleb128 0x12
+ 798 0365 72040000 		.4byte	.LASF65
+ 799 0369 08       		.byte	0x8
+ 800 036a 4A       		.byte	0x4a
+ 801 036b E6000000 		.4byte	0xe6
+ 802 036f 12       		.uleb128 0x12
+ 803 0370 54010000 		.4byte	.LASF66
+ 804 0374 09       		.byte	0x9
+ 805 0375 48       		.byte	0x48
+ 806 0376 FC000000 		.4byte	0xfc
+ 807 037a 12       		.uleb128 0x12
+ 808 037b 1D010000 		.4byte	.LASF67
+ 809 037f 0A       		.byte	0xa
+ 810 0380 44       		.byte	0x44
+ 811 0381 E6000000 		.4byte	0xe6
+ 812 0385 13       		.uleb128 0x13
+ 813 0386 F8040000 		.4byte	.LASF68
+ 814 038a 0B       		.byte	0xb
+ 815 038b 1207     		.2byte	0x712
+ 816 038d 91030000 		.4byte	0x391
+ 817 0391 14       		.uleb128 0x14
+ 818 0392 A2000000 		.4byte	0xa2
+ 819 0396 15       		.uleb128 0x15
+ 820 0397 A6030000 		.4byte	0x3a6
+ 821 039b A6030000 		.4byte	0x3a6
+ 822 039f 16       		.uleb128 0x16
+ 823 03a0 C9000000 		.4byte	0xc9
+ 824 03a4 08       		.byte	0x8
+ 825 03a5 00       		.byte	0
+ 826 03a6 17       		.uleb128 0x17
+ 827 03a7 F2010000 		.4byte	0x1f2
+ 828 03ab 18       		.uleb128 0x18
+ 829 03ac C2040000 		.4byte	.LASF69
+ 830 03b0 01       		.byte	0x1
+ 831 03b1 18       		.byte	0x18
+ 832 03b2 BC030000 		.4byte	0x3bc
+ 833 03b6 05       		.uleb128 0x5
+ 834 03b7 03       		.byte	0x3
+ 835 03b8 00000000 		.4byte	RG_glow_table
+ 836 03bc 17       		.uleb128 0x17
+ 837 03bd 96030000 		.4byte	0x396
+ 838 03c1 19       		.uleb128 0x19
+ 839 03c2 00000000 		.4byte	.LASF70
+ 840 03c6 00000000 		.4byte	.LASF70
+ 841 03ca 0C       		.byte	0xc
+ 842 03cb EF01     		.2byte	0x1ef
+ 843 03cd 1A       		.uleb128 0x1a
+ 844 03ce 5D040000 		.4byte	.LASF71
+ 845 03d2 5D040000 		.4byte	.LASF71
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 18
+
+
+ 846 03d6 0D       		.byte	0xd
+ 847 03d7 A6       		.byte	0xa6
+ 848 03d8 1A       		.uleb128 0x1a
+ 849 03d9 3B020000 		.4byte	.LASF72
+ 850 03dd 3B020000 		.4byte	.LASF72
+ 851 03e1 0E       		.byte	0xe
+ 852 03e2 C3       		.byte	0xc3
+ 853 03e3 1A       		.uleb128 0x1a
+ 854 03e4 12000000 		.4byte	.LASF73
+ 855 03e8 12000000 		.4byte	.LASF73
+ 856 03ec 0F       		.byte	0xf
+ 857 03ed C3       		.byte	0xc3
+ 858 03ee 1A       		.uleb128 0x1a
+ 859 03ef 0A040000 		.4byte	.LASF74
+ 860 03f3 0A040000 		.4byte	.LASF74
+ 861 03f7 10       		.byte	0x10
+ 862 03f8 C3       		.byte	0xc3
+ 863 03f9 1A       		.uleb128 0x1a
+ 864 03fa 32010000 		.4byte	.LASF75
+ 865 03fe 32010000 		.4byte	.LASF75
+ 866 0402 0C       		.byte	0xc
+ 867 0403 9F       		.byte	0x9f
+ 868 0404 00       		.byte	0
+ 869              		.section	.debug_abbrev,"",%progbits
+ 870              	.Ldebug_abbrev0:
+ 871 0000 01       		.uleb128 0x1
+ 872 0001 11       		.uleb128 0x11
+ 873 0002 01       		.byte	0x1
+ 874 0003 25       		.uleb128 0x25
+ 875 0004 0E       		.uleb128 0xe
+ 876 0005 13       		.uleb128 0x13
+ 877 0006 0B       		.uleb128 0xb
+ 878 0007 03       		.uleb128 0x3
+ 879 0008 0E       		.uleb128 0xe
+ 880 0009 1B       		.uleb128 0x1b
+ 881 000a 0E       		.uleb128 0xe
+ 882 000b 55       		.uleb128 0x55
+ 883 000c 17       		.uleb128 0x17
+ 884 000d 11       		.uleb128 0x11
+ 885 000e 01       		.uleb128 0x1
+ 886 000f 10       		.uleb128 0x10
+ 887 0010 17       		.uleb128 0x17
+ 888 0011 00       		.byte	0
+ 889 0012 00       		.byte	0
+ 890 0013 02       		.uleb128 0x2
+ 891 0014 24       		.uleb128 0x24
+ 892 0015 00       		.byte	0
+ 893 0016 0B       		.uleb128 0xb
+ 894 0017 0B       		.uleb128 0xb
+ 895 0018 3E       		.uleb128 0x3e
+ 896 0019 0B       		.uleb128 0xb
+ 897 001a 03       		.uleb128 0x3
+ 898 001b 0E       		.uleb128 0xe
+ 899 001c 00       		.byte	0
+ 900 001d 00       		.byte	0
+ 901 001e 03       		.uleb128 0x3
+ 902 001f 16       		.uleb128 0x16
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 19
+
+
+ 903 0020 00       		.byte	0
+ 904 0021 03       		.uleb128 0x3
+ 905 0022 0E       		.uleb128 0xe
+ 906 0023 3A       		.uleb128 0x3a
+ 907 0024 0B       		.uleb128 0xb
+ 908 0025 3B       		.uleb128 0x3b
+ 909 0026 0B       		.uleb128 0xb
+ 910 0027 49       		.uleb128 0x49
+ 911 0028 13       		.uleb128 0x13
+ 912 0029 00       		.byte	0
+ 913 002a 00       		.byte	0
+ 914 002b 04       		.uleb128 0x4
+ 915 002c 24       		.uleb128 0x24
+ 916 002d 00       		.byte	0
+ 917 002e 0B       		.uleb128 0xb
+ 918 002f 0B       		.uleb128 0xb
+ 919 0030 3E       		.uleb128 0x3e
+ 920 0031 0B       		.uleb128 0xb
+ 921 0032 03       		.uleb128 0x3
+ 922 0033 08       		.uleb128 0x8
+ 923 0034 00       		.byte	0
+ 924 0035 00       		.byte	0
+ 925 0036 05       		.uleb128 0x5
+ 926 0037 04       		.uleb128 0x4
+ 927 0038 01       		.byte	0x1
+ 928 0039 03       		.uleb128 0x3
+ 929 003a 08       		.uleb128 0x8
+ 930 003b 0B       		.uleb128 0xb
+ 931 003c 0B       		.uleb128 0xb
+ 932 003d 49       		.uleb128 0x49
+ 933 003e 13       		.uleb128 0x13
+ 934 003f 3A       		.uleb128 0x3a
+ 935 0040 0B       		.uleb128 0xb
+ 936 0041 3B       		.uleb128 0x3b
+ 937 0042 0B       		.uleb128 0xb
+ 938 0043 01       		.uleb128 0x1
+ 939 0044 13       		.uleb128 0x13
+ 940 0045 00       		.byte	0
+ 941 0046 00       		.byte	0
+ 942 0047 06       		.uleb128 0x6
+ 943 0048 28       		.uleb128 0x28
+ 944 0049 00       		.byte	0
+ 945 004a 03       		.uleb128 0x3
+ 946 004b 0E       		.uleb128 0xe
+ 947 004c 1C       		.uleb128 0x1c
+ 948 004d 0B       		.uleb128 0xb
+ 949 004e 00       		.byte	0
+ 950 004f 00       		.byte	0
+ 951 0050 07       		.uleb128 0x7
+ 952 0051 28       		.uleb128 0x28
+ 953 0052 00       		.byte	0
+ 954 0053 03       		.uleb128 0x3
+ 955 0054 0E       		.uleb128 0xe
+ 956 0055 1C       		.uleb128 0x1c
+ 957 0056 0D       		.uleb128 0xd
+ 958 0057 00       		.byte	0
+ 959 0058 00       		.byte	0
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 20
+
+
+ 960 0059 08       		.uleb128 0x8
+ 961 005a 13       		.uleb128 0x13
+ 962 005b 01       		.byte	0x1
+ 963 005c 0B       		.uleb128 0xb
+ 964 005d 0B       		.uleb128 0xb
+ 965 005e 3A       		.uleb128 0x3a
+ 966 005f 0B       		.uleb128 0xb
+ 967 0060 3B       		.uleb128 0x3b
+ 968 0061 0B       		.uleb128 0xb
+ 969 0062 01       		.uleb128 0x1
+ 970 0063 13       		.uleb128 0x13
+ 971 0064 00       		.byte	0
+ 972 0065 00       		.byte	0
+ 973 0066 09       		.uleb128 0x9
+ 974 0067 0D       		.uleb128 0xd
+ 975 0068 00       		.byte	0
+ 976 0069 03       		.uleb128 0x3
+ 977 006a 0E       		.uleb128 0xe
+ 978 006b 3A       		.uleb128 0x3a
+ 979 006c 0B       		.uleb128 0xb
+ 980 006d 3B       		.uleb128 0x3b
+ 981 006e 0B       		.uleb128 0xb
+ 982 006f 49       		.uleb128 0x49
+ 983 0070 13       		.uleb128 0x13
+ 984 0071 38       		.uleb128 0x38
+ 985 0072 0B       		.uleb128 0xb
+ 986 0073 00       		.byte	0
+ 987 0074 00       		.byte	0
+ 988 0075 0A       		.uleb128 0xa
+ 989 0076 2E       		.uleb128 0x2e
+ 990 0077 01       		.byte	0x1
+ 991 0078 3F       		.uleb128 0x3f
+ 992 0079 19       		.uleb128 0x19
+ 993 007a 03       		.uleb128 0x3
+ 994 007b 0E       		.uleb128 0xe
+ 995 007c 3A       		.uleb128 0x3a
+ 996 007d 0B       		.uleb128 0xb
+ 997 007e 3B       		.uleb128 0x3b
+ 998 007f 0B       		.uleb128 0xb
+ 999 0080 27       		.uleb128 0x27
+ 1000 0081 19       		.uleb128 0x19
+ 1001 0082 49       		.uleb128 0x49
+ 1002 0083 13       		.uleb128 0x13
+ 1003 0084 11       		.uleb128 0x11
+ 1004 0085 01       		.uleb128 0x1
+ 1005 0086 12       		.uleb128 0x12
+ 1006 0087 06       		.uleb128 0x6
+ 1007 0088 40       		.uleb128 0x40
+ 1008 0089 18       		.uleb128 0x18
+ 1009 008a 9742     		.uleb128 0x2117
+ 1010 008c 19       		.uleb128 0x19
+ 1011 008d 01       		.uleb128 0x1
+ 1012 008e 13       		.uleb128 0x13
+ 1013 008f 00       		.byte	0
+ 1014 0090 00       		.byte	0
+ 1015 0091 0B       		.uleb128 0xb
+ 1016 0092 34       		.uleb128 0x34
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 21
+
+
+ 1017 0093 00       		.byte	0
+ 1018 0094 03       		.uleb128 0x3
+ 1019 0095 0E       		.uleb128 0xe
+ 1020 0096 3A       		.uleb128 0x3a
+ 1021 0097 0B       		.uleb128 0xb
+ 1022 0098 3B       		.uleb128 0x3b
+ 1023 0099 0B       		.uleb128 0xb
+ 1024 009a 49       		.uleb128 0x49
+ 1025 009b 13       		.uleb128 0x13
+ 1026 009c 02       		.uleb128 0x2
+ 1027 009d 18       		.uleb128 0x18
+ 1028 009e 00       		.byte	0
+ 1029 009f 00       		.byte	0
+ 1030 00a0 0C       		.uleb128 0xc
+ 1031 00a1 898201   		.uleb128 0x4109
+ 1032 00a4 01       		.byte	0x1
+ 1033 00a5 11       		.uleb128 0x11
+ 1034 00a6 01       		.uleb128 0x1
+ 1035 00a7 31       		.uleb128 0x31
+ 1036 00a8 13       		.uleb128 0x13
+ 1037 00a9 01       		.uleb128 0x1
+ 1038 00aa 13       		.uleb128 0x13
+ 1039 00ab 00       		.byte	0
+ 1040 00ac 00       		.byte	0
+ 1041 00ad 0D       		.uleb128 0xd
+ 1042 00ae 8A8201   		.uleb128 0x410a
+ 1043 00b1 00       		.byte	0
+ 1044 00b2 02       		.uleb128 0x2
+ 1045 00b3 18       		.uleb128 0x18
+ 1046 00b4 9142     		.uleb128 0x2111
+ 1047 00b6 18       		.uleb128 0x18
+ 1048 00b7 00       		.byte	0
+ 1049 00b8 00       		.byte	0
+ 1050 00b9 0E       		.uleb128 0xe
+ 1051 00ba 898201   		.uleb128 0x4109
+ 1052 00bd 00       		.byte	0
+ 1053 00be 11       		.uleb128 0x11
+ 1054 00bf 01       		.uleb128 0x1
+ 1055 00c0 31       		.uleb128 0x31
+ 1056 00c1 13       		.uleb128 0x13
+ 1057 00c2 00       		.byte	0
+ 1058 00c3 00       		.byte	0
+ 1059 00c4 0F       		.uleb128 0xf
+ 1060 00c5 34       		.uleb128 0x34
+ 1061 00c6 00       		.byte	0
+ 1062 00c7 03       		.uleb128 0x3
+ 1063 00c8 08       		.uleb128 0x8
+ 1064 00c9 3A       		.uleb128 0x3a
+ 1065 00ca 0B       		.uleb128 0xb
+ 1066 00cb 3B       		.uleb128 0x3b
+ 1067 00cc 0B       		.uleb128 0xb
+ 1068 00cd 49       		.uleb128 0x49
+ 1069 00ce 13       		.uleb128 0x13
+ 1070 00cf 02       		.uleb128 0x2
+ 1071 00d0 18       		.uleb128 0x18
+ 1072 00d1 00       		.byte	0
+ 1073 00d2 00       		.byte	0
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 22
+
+
+ 1074 00d3 10       		.uleb128 0x10
+ 1075 00d4 898201   		.uleb128 0x4109
+ 1076 00d7 01       		.byte	0x1
+ 1077 00d8 11       		.uleb128 0x11
+ 1078 00d9 01       		.uleb128 0x1
+ 1079 00da 31       		.uleb128 0x31
+ 1080 00db 13       		.uleb128 0x13
+ 1081 00dc 00       		.byte	0
+ 1082 00dd 00       		.byte	0
+ 1083 00de 11       		.uleb128 0x11
+ 1084 00df 2E       		.uleb128 0x2e
+ 1085 00e0 01       		.byte	0x1
+ 1086 00e1 3F       		.uleb128 0x3f
+ 1087 00e2 19       		.uleb128 0x19
+ 1088 00e3 03       		.uleb128 0x3
+ 1089 00e4 0E       		.uleb128 0xe
+ 1090 00e5 3A       		.uleb128 0x3a
+ 1091 00e6 0B       		.uleb128 0xb
+ 1092 00e7 3B       		.uleb128 0x3b
+ 1093 00e8 0B       		.uleb128 0xb
+ 1094 00e9 27       		.uleb128 0x27
+ 1095 00ea 19       		.uleb128 0x19
+ 1096 00eb 11       		.uleb128 0x11
+ 1097 00ec 01       		.uleb128 0x1
+ 1098 00ed 12       		.uleb128 0x12
+ 1099 00ee 06       		.uleb128 0x6
+ 1100 00ef 40       		.uleb128 0x40
+ 1101 00f0 18       		.uleb128 0x18
+ 1102 00f1 9742     		.uleb128 0x2117
+ 1103 00f3 19       		.uleb128 0x19
+ 1104 00f4 01       		.uleb128 0x1
+ 1105 00f5 13       		.uleb128 0x13
+ 1106 00f6 00       		.byte	0
+ 1107 00f7 00       		.byte	0
+ 1108 00f8 12       		.uleb128 0x12
+ 1109 00f9 34       		.uleb128 0x34
+ 1110 00fa 00       		.byte	0
+ 1111 00fb 03       		.uleb128 0x3
+ 1112 00fc 0E       		.uleb128 0xe
+ 1113 00fd 3A       		.uleb128 0x3a
+ 1114 00fe 0B       		.uleb128 0xb
+ 1115 00ff 3B       		.uleb128 0x3b
+ 1116 0100 0B       		.uleb128 0xb
+ 1117 0101 49       		.uleb128 0x49
+ 1118 0102 13       		.uleb128 0x13
+ 1119 0103 3F       		.uleb128 0x3f
+ 1120 0104 19       		.uleb128 0x19
+ 1121 0105 3C       		.uleb128 0x3c
+ 1122 0106 19       		.uleb128 0x19
+ 1123 0107 00       		.byte	0
+ 1124 0108 00       		.byte	0
+ 1125 0109 13       		.uleb128 0x13
+ 1126 010a 34       		.uleb128 0x34
+ 1127 010b 00       		.byte	0
+ 1128 010c 03       		.uleb128 0x3
+ 1129 010d 0E       		.uleb128 0xe
+ 1130 010e 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 23
+
+
+ 1131 010f 0B       		.uleb128 0xb
+ 1132 0110 3B       		.uleb128 0x3b
+ 1133 0111 05       		.uleb128 0x5
+ 1134 0112 49       		.uleb128 0x49
+ 1135 0113 13       		.uleb128 0x13
+ 1136 0114 3F       		.uleb128 0x3f
+ 1137 0115 19       		.uleb128 0x19
+ 1138 0116 3C       		.uleb128 0x3c
+ 1139 0117 19       		.uleb128 0x19
+ 1140 0118 00       		.byte	0
+ 1141 0119 00       		.byte	0
+ 1142 011a 14       		.uleb128 0x14
+ 1143 011b 35       		.uleb128 0x35
+ 1144 011c 00       		.byte	0
+ 1145 011d 49       		.uleb128 0x49
+ 1146 011e 13       		.uleb128 0x13
+ 1147 011f 00       		.byte	0
+ 1148 0120 00       		.byte	0
+ 1149 0121 15       		.uleb128 0x15
+ 1150 0122 01       		.uleb128 0x1
+ 1151 0123 01       		.byte	0x1
+ 1152 0124 49       		.uleb128 0x49
+ 1153 0125 13       		.uleb128 0x13
+ 1154 0126 01       		.uleb128 0x1
+ 1155 0127 13       		.uleb128 0x13
+ 1156 0128 00       		.byte	0
+ 1157 0129 00       		.byte	0
+ 1158 012a 16       		.uleb128 0x16
+ 1159 012b 21       		.uleb128 0x21
+ 1160 012c 00       		.byte	0
+ 1161 012d 49       		.uleb128 0x49
+ 1162 012e 13       		.uleb128 0x13
+ 1163 012f 2F       		.uleb128 0x2f
+ 1164 0130 0B       		.uleb128 0xb
+ 1165 0131 00       		.byte	0
+ 1166 0132 00       		.byte	0
+ 1167 0133 17       		.uleb128 0x17
+ 1168 0134 26       		.uleb128 0x26
+ 1169 0135 00       		.byte	0
+ 1170 0136 49       		.uleb128 0x49
+ 1171 0137 13       		.uleb128 0x13
+ 1172 0138 00       		.byte	0
+ 1173 0139 00       		.byte	0
+ 1174 013a 18       		.uleb128 0x18
+ 1175 013b 34       		.uleb128 0x34
+ 1176 013c 00       		.byte	0
+ 1177 013d 03       		.uleb128 0x3
+ 1178 013e 0E       		.uleb128 0xe
+ 1179 013f 3A       		.uleb128 0x3a
+ 1180 0140 0B       		.uleb128 0xb
+ 1181 0141 3B       		.uleb128 0x3b
+ 1182 0142 0B       		.uleb128 0xb
+ 1183 0143 49       		.uleb128 0x49
+ 1184 0144 13       		.uleb128 0x13
+ 1185 0145 3F       		.uleb128 0x3f
+ 1186 0146 19       		.uleb128 0x19
+ 1187 0147 02       		.uleb128 0x2
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 24
+
+
+ 1188 0148 18       		.uleb128 0x18
+ 1189 0149 00       		.byte	0
+ 1190 014a 00       		.byte	0
+ 1191 014b 19       		.uleb128 0x19
+ 1192 014c 2E       		.uleb128 0x2e
+ 1193 014d 00       		.byte	0
+ 1194 014e 3F       		.uleb128 0x3f
+ 1195 014f 19       		.uleb128 0x19
+ 1196 0150 3C       		.uleb128 0x3c
+ 1197 0151 19       		.uleb128 0x19
+ 1198 0152 6E       		.uleb128 0x6e
+ 1199 0153 0E       		.uleb128 0xe
+ 1200 0154 03       		.uleb128 0x3
+ 1201 0155 0E       		.uleb128 0xe
+ 1202 0156 3A       		.uleb128 0x3a
+ 1203 0157 0B       		.uleb128 0xb
+ 1204 0158 3B       		.uleb128 0x3b
+ 1205 0159 05       		.uleb128 0x5
+ 1206 015a 00       		.byte	0
+ 1207 015b 00       		.byte	0
+ 1208 015c 1A       		.uleb128 0x1a
+ 1209 015d 2E       		.uleb128 0x2e
+ 1210 015e 00       		.byte	0
+ 1211 015f 3F       		.uleb128 0x3f
+ 1212 0160 19       		.uleb128 0x19
+ 1213 0161 3C       		.uleb128 0x3c
+ 1214 0162 19       		.uleb128 0x19
+ 1215 0163 6E       		.uleb128 0x6e
+ 1216 0164 0E       		.uleb128 0xe
+ 1217 0165 03       		.uleb128 0x3
+ 1218 0166 0E       		.uleb128 0xe
+ 1219 0167 3A       		.uleb128 0x3a
+ 1220 0168 0B       		.uleb128 0xb
+ 1221 0169 3B       		.uleb128 0x3b
+ 1222 016a 0B       		.uleb128 0xb
+ 1223 016b 00       		.byte	0
+ 1224 016c 00       		.byte	0
+ 1225 016d 00       		.byte	0
+ 1226              		.section	.debug_aranges,"",%progbits
+ 1227 0000 34000000 		.4byte	0x34
+ 1228 0004 0200     		.2byte	0x2
+ 1229 0006 00000000 		.4byte	.Ldebug_info0
+ 1230 000a 04       		.byte	0x4
+ 1231 000b 00       		.byte	0
+ 1232 000c 0000     		.2byte	0
+ 1233 000e 0000     		.2byte	0
+ 1234 0010 00000000 		.4byte	.LFB110
+ 1235 0014 A8000000 		.4byte	.LFE110-.LFB110
+ 1236 0018 00000000 		.4byte	.LFB111
+ 1237 001c 68000000 		.4byte	.LFE111-.LFB111
+ 1238 0020 00000000 		.4byte	.LFB112
+ 1239 0024 0C000000 		.4byte	.LFE112-.LFB112
+ 1240 0028 00000000 		.4byte	.LFB113
+ 1241 002c 0C000000 		.4byte	.LFE113-.LFB113
+ 1242 0030 00000000 		.4byte	0
+ 1243 0034 00000000 		.4byte	0
+ 1244              		.section	.debug_ranges,"",%progbits
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 25
+
+
+ 1245              	.Ldebug_ranges0:
+ 1246 0000 00000000 		.4byte	.LFB110
+ 1247 0004 A8000000 		.4byte	.LFE110
+ 1248 0008 00000000 		.4byte	.LFB111
+ 1249 000c 68000000 		.4byte	.LFE111
+ 1250 0010 00000000 		.4byte	.LFB112
+ 1251 0014 0C000000 		.4byte	.LFE112
+ 1252 0018 00000000 		.4byte	.LFB113
+ 1253 001c 0C000000 		.4byte	.LFE113
+ 1254 0020 00000000 		.4byte	0
+ 1255 0024 00000000 		.4byte	0
+ 1256              		.section	.debug_line,"",%progbits
+ 1257              	.Ldebug_line0:
+ 1258 0000 BE020000 		.section	.debug_str,"MS",%progbits,1
+ 1258      02003702 
+ 1258      00000201 
+ 1258      FB0E0D00 
+ 1258      01010101 
+ 1259              	.LASF70:
+ 1260 0000 45455F6F 		.ascii	"EE_oo_SetRelAlarm\000"
+ 1260      6F5F5365 
+ 1260      7452656C 
+ 1260      416C6172 
+ 1260      6D00
+ 1261              	.LASF73:
+ 1262 0012 5247425F 		.ascii	"RGB_PWM_green_WriteCompare\000"
+ 1262      50574D5F 
+ 1262      67726565 
+ 1262      6E5F5772 
+ 1262      69746543 
+ 1263              	.LASF39:
+ 1264 002d 52435F45 		.ascii	"RC_ERROR_READ_ONLY\000"
+ 1264      52524F52 
+ 1264      5F524541 
+ 1264      445F4F4E 
+ 1264      4C5900
+ 1265              	.LASF25:
+ 1266 0040 52435F53 		.ascii	"RC_SUCCESS\000"
+ 1266      55434345 
+ 1266      535300
+ 1267              	.LASF40:
+ 1268 004b 52435F45 		.ascii	"RC_ERROR_WRITE_ONLY\000"
+ 1268      52524F52 
+ 1268      5F575249 
+ 1268      54455F4F 
+ 1268      4E4C5900 
+ 1269              	.LASF56:
+ 1270 005f 72656449 		.ascii	"redIntense\000"
+ 1270      6E74656E 
+ 1270      736500
+ 1271              	.LASF2:
+ 1272 006a 73686F72 		.ascii	"short int\000"
+ 1272      7420696E 
+ 1272      7400
+ 1273              	.LASF31:
+ 1274 0074 52435F45 		.ascii	"RC_ERROR_OVERRUN\000"
+ 1274      52524F52 
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 26
+
+
+ 1274      5F4F5645 
+ 1274      5252554E 
+ 1274      00
+ 1275              	.LASF43:
+ 1276 0085 52435F45 		.ascii	"RC_ERROR_WRITE_FAILS\000"
+ 1276      52524F52 
+ 1276      5F575249 
+ 1276      54455F46 
+ 1276      41494C53 
+ 1277              	.LASF19:
+ 1278 009a 73697A65 		.ascii	"sizetype\000"
+ 1278      74797065 
+ 1278      00
+ 1279              	.LASF28:
+ 1280 00a3 52435F45 		.ascii	"RC_ERROR_ZERO\000"
+ 1280      52524F52 
+ 1280      5F5A4552 
+ 1280      4F00
+ 1281              	.LASF23:
+ 1282 00b1 45455F46 		.ascii	"EE_FREG\000"
+ 1282      52454700 
+ 1283              	.LASF42:
+ 1284 00b9 52435F45 		.ascii	"RC_ERROR_READ_FAILS\000"
+ 1284      52524F52 
+ 1284      5F524541 
+ 1284      445F4641 
+ 1284      494C5300 
+ 1285              	.LASF77:
+ 1286 00cd 61726361 		.ascii	"arcadian.c\000"
+ 1286      6469616E 
+ 1286      2E6300
+ 1287              	.LASF21:
+ 1288 00d8 45455F55 		.ascii	"EE_UINT32\000"
+ 1288      494E5433 
+ 1288      3200
+ 1289              	.LASF4:
+ 1290 00e2 5F5F7569 		.ascii	"__uint16_t\000"
+ 1290      6E743136 
+ 1290      5F7400
+ 1291              	.LASF24:
+ 1292 00ed 45455F54 		.ascii	"EE_TID\000"
+ 1292      494400
+ 1293              	.LASF55:
+ 1294 00f4 52475F47 		.ascii	"RG_Glow_t\000"
+ 1294      6C6F775F 
+ 1294      7400
+ 1295              	.LASF12:
+ 1296 00fe 75696E74 		.ascii	"uint8_t\000"
+ 1296      385F7400 
+ 1297              	.LASF48:
+ 1298 0106 52435F45 		.ascii	"RC_ERROR_INVALID_STATE\000"
+ 1298      52524F52 
+ 1298      5F494E56 
+ 1298      414C4944 
+ 1298      5F535441 
+ 1299              	.LASF67:
+ 1300 011d 45455F49 		.ascii	"EE_IRQ_nesting_level\000"
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 27
+
+
+ 1300      52515F6E 
+ 1300      65737469 
+ 1300      6E675F6C 
+ 1300      6576656C 
+ 1301              	.LASF75:
+ 1302 0132 45455F6F 		.ascii	"EE_oo_TerminateTask\000"
+ 1302      6F5F5465 
+ 1302      726D696E 
+ 1302      61746554 
+ 1302      61736B00 
+ 1303              	.LASF57:
+ 1304 0146 79656C6C 		.ascii	"yellowIntense\000"
+ 1304      6F77496E 
+ 1304      74656E73 
+ 1304      6500
+ 1305              	.LASF66:
+ 1306 0154 45455F73 		.ascii	"EE_std_endcycle_next_tid\000"
+ 1306      74645F65 
+ 1306      6E646379 
+ 1306      636C655F 
+ 1306      6E657874 
+ 1307              	.LASF30:
+ 1308 016d 52435F45 		.ascii	"RC_ERROR_RANGE\000"
+ 1308      52524F52 
+ 1308      5F52414E 
+ 1308      474500
+ 1309              	.LASF61:
+ 1310 017c 46756E63 		.ascii	"Functsk_fader\000"
+ 1310      74736B5F 
+ 1310      66616465 
+ 1310      7200
+ 1311              	.LASF15:
+ 1312 018a 666C6F61 		.ascii	"float\000"
+ 1312      7400
+ 1313              	.LASF9:
+ 1314 0190 6C6F6E67 		.ascii	"long long int\000"
+ 1314      206C6F6E 
+ 1314      6720696E 
+ 1314      7400
+ 1315              	.LASF64:
+ 1316 019e 45455F6F 		.ascii	"EE_oo_IRQ_suspend_status\000"
+ 1316      6F5F4952 
+ 1316      515F7375 
+ 1316      7370656E 
+ 1316      645F7374 
+ 1317              	.LASF44:
+ 1318 01b7 52435F45 		.ascii	"RC_ERROR_NOT_MATCH\000"
+ 1318      52524F52 
+ 1318      5F4E4F54 
+ 1318      5F4D4154 
+ 1318      434800
+ 1319              	.LASF49:
+ 1320 01ca 52435F45 		.ascii	"RC_ERROR_UNKNOWN\000"
+ 1320      52524F52 
+ 1320      5F554E4B 
+ 1320      4E4F574E 
+ 1320      00
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 28
+
+
+ 1321              	.LASF7:
+ 1322 01db 6C6F6E67 		.ascii	"long int\000"
+ 1322      20696E74 
+ 1322      00
+ 1323              	.LASF32:
+ 1324 01e4 52435F45 		.ascii	"RC_ERROR_UNDERRUN\000"
+ 1324      52524F52 
+ 1324      5F554E44 
+ 1324      45525255 
+ 1324      4E00
+ 1325              	.LASF58:
+ 1326 01f6 67726565 		.ascii	"greenIntense\000"
+ 1326      6E496E74 
+ 1326      656E7365 
+ 1326      00
+ 1327              	.LASF35:
+ 1328 0203 52435F45 		.ascii	"RC_ERROR_BUSY\000"
+ 1328      52524F52 
+ 1328      5F425553 
+ 1328      5900
+ 1329              	.LASF3:
+ 1330 0211 5F5F7569 		.ascii	"__uint8_t\000"
+ 1330      6E74385F 
+ 1330      7400
+ 1331              	.LASF41:
+ 1332 021b 52435F45 		.ascii	"RC_ERROR_INVALID\000"
+ 1332      52524F52 
+ 1332      5F494E56 
+ 1332      414C4944 
+ 1332      00
+ 1333              	.LASF62:
+ 1334 022c 46756E63 		.ascii	"Functsk_glower\000"
+ 1334      74736B5F 
+ 1334      676C6F77 
+ 1334      657200
+ 1335              	.LASF72:
+ 1336 023b 5247425F 		.ascii	"RGB_PWM_red_WriteCompare\000"
+ 1336      50574D5F 
+ 1336      7265645F 
+ 1336      57726974 
+ 1336      65436F6D 
+ 1337              	.LASF18:
+ 1338 0254 6C6F6E67 		.ascii	"long double\000"
+ 1338      20646F75 
+ 1338      626C6500 
+ 1339              	.LASF1:
+ 1340 0260 756E7369 		.ascii	"unsigned char\000"
+ 1340      676E6564 
+ 1340      20636861 
+ 1340      7200
+ 1341              	.LASF52:
+ 1342 026e 67726565 		.ascii	"green_rgb\000"
+ 1342      6E5F7267 
+ 1342      6200
+ 1343              	.LASF46:
+ 1344 0278 52435F45 		.ascii	"RC_ERROR_BAD_DATA\000"
+ 1344      52524F52 
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 29
+
+
+ 1344      5F424144 
+ 1344      5F444154 
+ 1344      4100
+ 1345              	.LASF45:
+ 1346 028a 52435F45 		.ascii	"RC_ERROR_BAD_PARAM\000"
+ 1346      52524F52 
+ 1346      5F424144 
+ 1346      5F504152 
+ 1346      414D00
+ 1347              	.LASF0:
+ 1348 029d 7369676E 		.ascii	"signed char\000"
+ 1348      65642063 
+ 1348      68617200 
+ 1349              	.LASF10:
+ 1350 02a9 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1350      206C6F6E 
+ 1350      6720756E 
+ 1350      7369676E 
+ 1350      65642069 
+ 1351              	.LASF78:
+ 1352 02c0 443A5C4D 		.ascii	"D:\\MS\\HDA\\Embedded\\EOS\\LabAssignments\\Lab2\\R"
+ 1352      535C4844 
+ 1352      415C456D 
+ 1352      62656464 
+ 1352      65645C45 
+ 1353 02ec 65616374 		.ascii	"eaction_Game_Final\\Reaction_Game_Erika.cydsn\000"
+ 1353      696F6E5F 
+ 1353      47616D65 
+ 1353      5F46696E 
+ 1353      616C5C52 
+ 1354              	.LASF11:
+ 1355 0319 756E7369 		.ascii	"unsigned int\000"
+ 1355      676E6564 
+ 1355      20696E74 
+ 1355      00
+ 1356              	.LASF37:
+ 1357 0326 52435F45 		.ascii	"RC_ERROR_OPEN\000"
+ 1357      52524F52 
+ 1357      5F4F5045 
+ 1357      4E00
+ 1358              	.LASF51:
+ 1359 0334 7265645F 		.ascii	"red_rgb\000"
+ 1359      72676200 
+ 1360              	.LASF27:
+ 1361 033c 52435F45 		.ascii	"RC_ERROR_NULL\000"
+ 1361      52524F52 
+ 1361      5F4E554C 
+ 1361      4C00
+ 1362              	.LASF34:
+ 1363 034a 52435F45 		.ascii	"RC_ERROR_BUFFER_EMTPY\000"
+ 1363      52524F52 
+ 1363      5F425546 
+ 1363      4645525F 
+ 1363      454D5450 
+ 1364              	.LASF20:
+ 1365 0360 45455F49 		.ascii	"EE_INT32\000"
+ 1365      4E543332 
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 30
+
+
+ 1365      00
+ 1366              	.LASF5:
+ 1367 0369 73686F72 		.ascii	"short unsigned int\000"
+ 1367      7420756E 
+ 1367      7369676E 
+ 1367      65642069 
+ 1367      6E7400
+ 1368              	.LASF76:
+ 1369 037c 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1369      43313120 
+ 1369      352E342E 
+ 1369      31203230 
+ 1369      31363036 
+ 1370 03af 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1370      20726576 
+ 1370      6973696F 
+ 1370      6E203233 
+ 1370      37373135 
+ 1371 03e2 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1371      66756E63 
+ 1371      74696F6E 
+ 1371      2D736563 
+ 1371      74696F6E 
+ 1372              	.LASF74:
+ 1373 040a 5247425F 		.ascii	"RGB_PWM_blue_WriteCompare\000"
+ 1373      50574D5F 
+ 1373      626C7565 
+ 1373      5F577269 
+ 1373      7465436F 
+ 1374              	.LASF17:
+ 1375 0424 63686172 		.ascii	"char\000"
+ 1375      00
+ 1376              	.LASF13:
+ 1377 0429 75696E74 		.ascii	"uint16_t\000"
+ 1377      31365F74 
+ 1377      00
+ 1378              	.LASF33:
+ 1379 0432 52435F45 		.ascii	"RC_ERROR_BUFFER_FULL\000"
+ 1379      52524F52 
+ 1379      5F425546 
+ 1379      4645525F 
+ 1379      46554C4C 
+ 1380              	.LASF14:
+ 1381 0447 696E7433 		.ascii	"int32_t\000"
+ 1381      325F7400 
+ 1382              	.LASF60:
+ 1383 044f 676C6F77 		.ascii	"glower_Effect\000"
+ 1383      65725F45 
+ 1383      66666563 
+ 1383      7400
+ 1384              	.LASF71:
+ 1385 045d 4C45445F 		.ascii	"LED_RGB_Set\000"
+ 1385      5247425F 
+ 1385      53657400 
+ 1386              	.LASF54:
+ 1387 0469 64757261 		.ascii	"duration\000"
+ 1387      74696F6E 
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 31
+
+
+ 1387      00
+ 1388              	.LASF65:
+ 1389 0472 45455F41 		.ascii	"EE_ApplicationMode\000"
+ 1389      70706C69 
+ 1389      63617469 
+ 1389      6F6E4D6F 
+ 1389      646500
+ 1390              	.LASF8:
+ 1391 0485 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1391      20756E73 
+ 1391      69676E65 
+ 1391      6420696E 
+ 1391      7400
+ 1392              	.LASF16:
+ 1393 0497 646F7562 		.ascii	"double\000"
+ 1393      6C6500
+ 1394              	.LASF38:
+ 1395 049e 52435F45 		.ascii	"RC_ERROR_CHECKSUM\000"
+ 1395      52524F52 
+ 1395      5F434845 
+ 1395      434B5355 
+ 1395      4D00
+ 1396              	.LASF22:
+ 1397 04b0 45455F55 		.ascii	"EE_UREG\000"
+ 1397      52454700 
+ 1398              	.LASF6:
+ 1399 04b8 5F5F696E 		.ascii	"__int32_t\000"
+ 1399      7433325F 
+ 1399      7400
+ 1400              	.LASF69:
+ 1401 04c2 52475F67 		.ascii	"RG_glow_table\000"
+ 1401      6C6F775F 
+ 1401      7461626C 
+ 1401      6500
+ 1402              	.LASF59:
+ 1403 04d0 66616465 		.ascii	"fader_Effect\000"
+ 1403      725F4566 
+ 1403      66656374 
+ 1403      00
+ 1404              	.LASF47:
+ 1405 04dd 52435F45 		.ascii	"RC_ERROR_CANCELED\000"
+ 1405      52524F52 
+ 1405      5F43414E 
+ 1405      43454C45 
+ 1405      4400
+ 1406              	.LASF53:
+ 1407 04ef 626C7565 		.ascii	"blue_rgb\000"
+ 1407      5F726762 
+ 1407      00
+ 1408              	.LASF68:
+ 1409 04f8 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1409      52784275 
+ 1409      66666572 
+ 1409      00
+ 1410              	.LASF26:
+ 1411 0505 52435F45 		.ascii	"RC_ERROR\000"
+ 1411      52524F52 
+ARM GAS  C:\Users\DHEERA~1\AppData\Local\Temp\ccSpG7f5.s 			page 32
+
+
+ 1411      00
+ 1412              	.LASF29:
+ 1413 050e 52435F45 		.ascii	"RC_ERROR_MEMORY\000"
+ 1413      52524F52 
+ 1413      5F4D454D 
+ 1413      4F525900 
+ 1414              	.LASF63:
+ 1415 051e 45455F6F 		.ascii	"EE_oo_IRQ_disable_count\000"
+ 1415      6F5F4952 
+ 1415      515F6469 
+ 1415      7361626C 
+ 1415      655F636F 
+ 1416              	.LASF50:
+ 1417 0536 52435F74 		.ascii	"RC_t\000"
+ 1417      00
+ 1418              	.LASF36:
+ 1419 053b 52435F45 		.ascii	"RC_ERROR_TIME_OUT\000"
+ 1419      52524F52 
+ 1419      5F54494D 
+ 1419      455F4F55 
+ 1419      5400
+ 1420              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
