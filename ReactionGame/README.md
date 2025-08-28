@@ -1,2 +1,0 @@
-# ReactionGame
-A reaction-time game built on the PSoC 5LP Lab Board using Erika OS with AUTOSAR-like tasks, events, and alarms. Features precise timing, state machine logic, and “Arcadian style” LED effects (fading &amp; RGB glow) in Embedded C.
