@@ -56,7 +56,7 @@ Follow the steps below to build and run the project on hardware:
 
 1. **Download the Project**  
    - Clone this repository or download the ZIP file directly from GitHub.  
-   - Extract the contents if downloaded as ZIP.  
+   - Extract the contents if downloaded as ZIP. [Project link](https://github.com/DheerajSwaroopSaligramaMahesh/Advanced_Microcontroller_Embedded_OS-ReactionGame/tree/main/ReactionGame/Reaction_Game_Erika.cydsn)  
 
 2. **Import into PSoC Creator**  
    - Open **PSoC Creator (version 4.4 or higher recommended)**.  
