@@ -1,42 +1,49 @@
 # Reaction Game
-- The application runs as an Autosar Application.
-- Upon startup, the program will show a welcome message via the serial port.
-- After pressing one of the two white buttons, the program will wait for a random time.
-- After waiting for 1s to 3s a random value (1 or 2) will be displayed on both 7 segment displays.
-- The user has to press the right button in case a ‘1’ is displayed and the left button in case a ‘2’ is displayed.
-- In case the correct button is being pressed, the measured reaction time in [ms] will be shown and the game can be started again by pressing one of the two buttons.
-- In case a wrong button is pressed, an error message will be displayed and the game can be started again by pressing one of the two buttons.
-- In case the user does not press a button within 1 s, the message “Too slow” will appear and the game can be started again by pressing one of the two buttons.
-- One game consists out of 10 rounds.
-- At the end of a game, print the score (i.e. correct number of button pressed), the total time and the average time.
+
+This project implements a simple **reaction game** as an AUTOSAR application.
+
+## Game Description
+- Upon startup, the program shows a **welcome message** via the serial port.  
+- The game starts when the user presses one of the **two white buttons**.  
+- After a random delay of **1s to 3s**, a random value (`1` or `2`) is displayed on both 7-segment displays.  
+
+### Rules
+- If **`1`** is displayed → Press the **right button**.  
+- If **`2`** is displayed → Press the **left button**.  
+- **Correct press** → The measured **reaction time (ms)** is shown.  
+- **Wrong press** → An **error message** is displayed.  
+- **No press within 1s** → The message **“Too slow”** is shown.  
+- The game can be restarted anytime by pressing one of the two buttons.
+
+### Game Flow
+- One game consists of **10 rounds**.  
+- At the end of the game, the following statistics are shown:
+  - **Score** (number of correct button presses)  
+  - **Total time**  
+  - **Average time**  
+
+---
 
 # Arcadian Style Light
-In a first step, we want to create a fading traveling light. The three LED’s are glowing using the following pattern:
+
+In this part, we implement an **Arcadian style fading traveling light**.  
+Three LEDs glow in the following sequence:
+
 ![Arcadian Light Pattern](/ReactionGame/Images/arcadian.png)
 
-Using the RGB LED, we want to implement an easily configurable glowing function. Using a const - table like the following (pseudo code)
+## RGB LED Glow Function
+We define a glow sequence using a **constant configuration table**:  
+
+```c
 const RG__Glow_t RG_glowtable_1[] = {
-//Red Green Blue TimeInMS
-{255, 0, 0, 500},
-{0, 255, 0, 500},
-{0, 0, 255, 500},
-{0, 0, 0, 100},
-{255, 255, 255, 100},
-{0, 0, 0, 100},
-{255, 255, 255, 100},
-{0, 0, 0, 100},
-{255, 255, 255, 100}
+    // Red  Green  Blue   TimeInMS
+    {255,   0,     0,     500},   // Red
+    {0,   255,     0,     500},   // Green
+    {0,     0,   255,     500},   // Blue
+    {0,     0,     0,     100},   // Off
+    {255, 255,   255,     100},   // White
+    {0,     0,     0,     100},   // Off
+    {255, 255,   255,     100},   // White
+    {0,     0,     0,     100},   // Off
+    {255, 255,   255,     100}    // White
 };
-
-will create the sequence:
-- 500ms red
-- 500ms green
-- 500ms blue
-- 100ms off
-- 100ms white
-- 100ms off
-- 100ms white
-- 100ms off
-- 100ms white
-
-This sequence will be repeated permanently.
