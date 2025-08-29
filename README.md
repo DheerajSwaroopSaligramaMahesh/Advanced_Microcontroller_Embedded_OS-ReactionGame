@@ -47,9 +47,10 @@ const RG__Glow_t RG_glowtable_1[] = {
     {0,     0,     0,     100},   // Off
     {255, 255,   255,     100}    // White
 };
+```
 ---
 
-# 🚀 How to Use
+# How to Use
 
 Follow the steps below to build and run the project on hardware:
 
@@ -72,4 +73,4 @@ Follow the steps below to build and run the project on hardware:
 5. **Play the Game**  
    - Once the board is programmed, open the **serial terminal** (baud rate as configured in code).  
    - Press either button to start a round.  
-   - Follow the on-screen instructions and enjoy the reaction game! 🎉  
+   - Follow the on-screen instructions and enjoy the reaction game!
