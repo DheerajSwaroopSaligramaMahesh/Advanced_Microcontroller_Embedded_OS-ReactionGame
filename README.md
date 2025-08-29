@@ -47,3 +47,29 @@ const RG__Glow_t RG_glowtable_1[] = {
     {0,     0,     0,     100},   // Off
     {255, 255,   255,     100}    // White
 };
+---
+
+# 🚀 How to Use
+
+Follow the steps below to build and run the project on hardware:
+
+1. **Download the Project**  
+   - Clone this repository or download the ZIP file directly from GitHub.  
+   - Extract the contents if downloaded as ZIP.  
+
+2. **Import into PSoC Creator**  
+   - Open **PSoC Creator (version 4.4 or higher recommended)**.  
+   - Use *File → Import Project* and select the extracted project folder.  
+
+3. **Build the Project**  
+   - Compile the project by clicking on **Build → Build <ProjectName>**.  
+   - Ensure there are no build errors.  
+
+4. **Flash to Hardware**  
+   - Connect the **PSoC 5LP development board** (with 7-segment display and push buttons mounted on PCB).  
+   - Use **Program → Program Device** in PSoC Creator to flash the firmware.  
+
+5. **Play the Game**  
+   - Once the board is programmed, open the **serial terminal** (baud rate as configured in code).  
+   - Press either button to start a round.  
+   - Follow the on-screen instructions and enjoy the reaction game! 🎉  
